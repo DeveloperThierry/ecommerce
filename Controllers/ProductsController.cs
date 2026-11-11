@@ -113,5 +113,14 @@ namespace app.Controllers
 
             return Ok(product);
         }
+
+        [HttpPost]
+        public IActionResult CreateProduct([FromBody] Product product)
+        {
+            if(product is null) return BadRequest();
+            product.Id = new Random().Next(1000, 9999);
+            product.CreatedAt = DateTime.UtcNow;
+            return CreatedAtAction(nameof(GetProductById), new Product{Id = product.Id}, product);
+        }
     }
 }
