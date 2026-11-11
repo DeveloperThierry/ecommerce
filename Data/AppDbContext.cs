@@ -9,6 +9,6 @@ namespace app.Data
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options):DbContext(options)
     {
-        public DbSet<Product> products => Set<Product>();
+        public DbSet<Product> Products => Set<Product>();
     }
 }
