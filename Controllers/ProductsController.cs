@@ -31,7 +31,6 @@ namespace app.Controllers
             return Ok(response);
         }
 
-        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
@@ -40,7 +39,7 @@ namespace app.Controllers
             return Ok(result);
         }
 
-        [Authorize]
+        [Authorize(Roles ="Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
         {
@@ -49,7 +48,7 @@ namespace app.Controllers
             return CreatedAtAction(nameof(GetProductById), new Product{Id = product.Id}, product);
         }
 
-        [Authorize]
+        [Authorize(Roles ="Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] CreateProductDto dto)
         {
@@ -59,7 +58,7 @@ namespace app.Controllers
             return Ok(result);
         }
 
-        [Authorize]
+        [Authorize(Roles ="Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
