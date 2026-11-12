@@ -16,10 +16,17 @@ namespace app.Controllers
     public class ProductsController(AppDbContext context, IProductService productService) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> GetProducts()
+        public async Task<IActionResult> GetProducts([FromQuery] ProductQueryParameters query)
         {
-            var result = await productService.GetAllProductsAsync();
-            return Ok(result);
+            var (result, totalCount) = await productService.GetAllProductsAsync(query);
+            var response = new
+            {
+                data=result,
+                totalCount,
+                query.Page,
+                query.PageSize
+            };
+            return Ok(response);
         }
 
         [HttpGet("{id}")]
