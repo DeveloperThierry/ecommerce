@@ -6,6 +6,7 @@ using app.Data;
 using app.DTOs;
 using app.Models;
 using app.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,8 +14,9 @@ namespace app.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductsController(AppDbContext context, IProductService productService) : ControllerBase
+    public class ProductsController(IProductService productService) : ControllerBase
     {
+        
         [HttpGet]
         public async Task<IActionResult> GetProducts([FromQuery] ProductQueryParameters query)
         {
@@ -29,6 +31,7 @@ namespace app.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProductById(int id)
         {
@@ -37,6 +40,7 @@ namespace app.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
         {
@@ -45,6 +49,7 @@ namespace app.Controllers
             return CreatedAtAction(nameof(GetProductById), new Product{Id = product.Id}, product);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] CreateProductDto dto)
         {
@@ -54,6 +59,7 @@ namespace app.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
@@ -62,11 +68,11 @@ namespace app.Controllers
             return NoContent();
         }
 
-        [HttpGet("test-error")]
-        public IActionResult TestError()
-        {
-            throw new Exception("This is a test exception from products controller");
-        }
+        // [HttpGet("test-error")]
+        // public IActionResult TestError()
+        // {
+        //     throw new Exception("This is a test exception from products controller");
+        // }
 
     }
 }
