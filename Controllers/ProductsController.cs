@@ -55,5 +55,11 @@ namespace app.Controllers
             return NoContent();
         }
 
+        [HttpGet("test-error")]
+        public IActionResult TestError()
+        {
+            throw new Exception("This is a test exception from products controller");
+        }
+
     }
 }

@@ -1,4 +1,5 @@
 using app.Data;
+using app.Middleware;
 using app.Services;
 using app.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IProductService, ProductService>();
 var app = builder.Build();
-
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
