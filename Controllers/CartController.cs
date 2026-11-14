@@ -51,8 +51,8 @@ namespace app.Controllers
 
         private int GetCurrentUserId()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier);
-            return int.Parse(userId!.Value);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.Parse(userId!);
 
         }
     }
