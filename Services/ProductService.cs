@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace app.Services
 {
-    public class ProductService(AppDbContext context):IProductService
+    public class ProductService(AppDbContext context, ILogger<ProductService> logger):IProductService
     {
         public async Task<(IEnumerable<ProductDto> Data, int TotalCount)> GetAllProductsAsync(ProductQueryParameters query)
         {
@@ -48,13 +48,17 @@ namespace app.Services
                     Stock = p.Stock
                 }
             );
+            logger.LogInformation("Retrieving products with pagination");
             return (result, totalCount);
         }
         public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
+            logger.LogInformation("Retrieving product with ID: {ProductId}", id);
             var products = await context.Products.ToListAsync();
             var product = products.FirstOrDefault(p => p.Id == id);
-            if(product is null) return null;
+            if(product is null) {
+                logger.LogInformation("Product fetch failed. Product with ID {ProductId} was not found", id);
+                return null;}
             var result = new ProductDto()
             {
                 Id = product.Id,
@@ -63,11 +67,12 @@ namespace app.Services
                 Price = product.Price,
                 Stock = product.Stock
             };
-
+            logger.LogInformation("Product fetched suucessfully with ID: {ProductID}", id);
             return result;
         }
         public async Task<ProductDto> CreateProductAsync(CreateProductDto dto)
         {
+            logger.LogInformation("Creating product with name : {ProductName}", dto.Name);
             var product = new Product()
             {
                 Id = new Random().Next(1000, 9999),
@@ -79,6 +84,7 @@ namespace app.Services
             };
             await context.Products.AddAsync(product);
             await context.SaveChangesAsync();
+            logger.LogInformation("Product created suucessfully with ID: {ProductID}", product.Id);
             return new ProductDto()
             {
                 Id = product.Id,
@@ -91,7 +97,10 @@ namespace app.Services
         public async Task<ProductDto?> UpdateProductAsync(int id, CreateProductDto dto)
         {
              var existingProduct = await context.Products.FirstOrDefaultAsync(p => p.Id == id);
-            if(existingProduct is null) return null;
+            if(existingProduct is null) {
+                logger.LogInformation("Product update failed. Product with ID {ProductId} was not found", id);
+                return null;
+            }
             existingProduct.Name = dto.Name;
             existingProduct.Description = dto.Description;
             existingProduct.Price = dto.Price;
@@ -105,13 +114,17 @@ namespace app.Services
                 Price = existingProduct.Price,
                 Stock = existingProduct.Stock,
             };
+            logger.LogInformation("Product updated successefully. Product with ID {ProductId} was updated", id);
             return result;
         }
 
         public async Task<bool> DeleteProductAsync(int id)
         {
             var product = await context.Products.FirstOrDefaultAsync(p => p.Id == id);
-            if(product is null) return false;
+            if(product is null) {
+                logger.LogInformation("Product delete failed. Product with ID {ProductID} was not found", id);
+                return false;}
+            logger.LogInformation("Product delete successful. Product with ID {ProductID} was deleted", id);
             context.Products.Remove(product);
             return true;
         }
