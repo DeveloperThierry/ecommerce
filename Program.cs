@@ -23,6 +23,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddMemoryCache();
+builder.Services.AddCors();
 builder.Services.AddStackExchangeRedisCache(options =>
 {
 //    options.Configuration = "localhost:6379" 
@@ -63,9 +64,11 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // }
 
 app.UseHttpsRedirection();
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/scalar"));
 app.Run();
 
 Console.WriteLine("server running");
