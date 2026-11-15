@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 
 #Hide appsettings development file
 appsettings.Development.json
+.env
