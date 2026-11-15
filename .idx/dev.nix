@@ -9,6 +9,7 @@
     pkgs.dotnet-sdk_10
     pkgs.sqlite
     pkgs.redis 
+    pkgs.docker
   ];
 
   idx = {
