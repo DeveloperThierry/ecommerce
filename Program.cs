@@ -11,7 +11,7 @@ using Serilog;
 
 Log.Logger = new LoggerConfiguration().MinimumLevel.Information().WriteTo.Console().WriteTo.File(path:"Logs/log.txt", rollingInterval:RollingInterval.Day).CreateLogger();
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddMemoryCache();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Host.UseSerilog();

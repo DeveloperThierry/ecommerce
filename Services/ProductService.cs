@@ -7,13 +7,23 @@ using app.DTOs;
 using app.Models;
 using app.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace app.Services
 {
-    public class ProductService(AppDbContext context, ILogger<ProductService> logger):IProductService
+    public class ProductService(AppDbContext context, ILogger<ProductService> logger, IMemoryCache cache):IProductService
     {
+        private const string ProductsCacheKey = "products:list";
+        private const string ProductByIdCacheKeyPrefix = "products:id:";
         public async Task<(IEnumerable<ProductDto> Data, int TotalCount)> GetAllProductsAsync(ProductQueryParameters query)
         {
+            var cacheKey = $"{ProductsCacheKey}:page={query.Page}:size={query.PageSize}:search={query.Search}:min={query.MinPrice}:max={query.MaxPrice}:sort={query.SortBy}:desc={query.Descending}";
+            if(cache.TryGetValue(cacheKey, out (IEnumerable<ProductDto> Data, int TotalCount) cachedResult))
+            {
+                logger.LogInformation("Products list loaded from cache. key : {cacheKey}", cacheKey);
+                return cachedResult;
+            }
+            logger.LogInformation("Products list not found in cache. Loading from database");
             var productsQuery = context.Products.AsQueryable();
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
@@ -37,25 +47,37 @@ namespace app.Services
 
                 _ => productsQuery.OrderBy(p => p.Id)
             };
-            var products = await productsQuery.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
-            var result = products.Select(
-                p => new ProductDto()
+            var products = await productsQuery
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(p => new ProductDto
                 {
                     Id = p.Id,
                     Name = p.Name,
                     Description = p.Description,
                     Price = p.Price,
                     Stock = p.Stock
-                }
-            );
+                })
+                .ToListAsync();
             logger.LogInformation("Retrieving products with pagination");
-            return (result, totalCount);
+            var result = ((IEnumerable<ProductDto>)products, totalCount);
+            cache.Set(cacheKey, result, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration=TimeSpan.FromMinutes(2)
+            });
+            return result;
         }
         public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
+            var cacheKey = $"{ProductByIdCacheKeyPrefix}{id}";
+            if(cache.TryGetValue(cacheKey, out ProductDto? cachedProduct))
+            {
+                logger.LogInformation("Product with Id {ProductId} loaded from cache", id);
+                return cachedProduct;
+            }
             logger.LogInformation("Retrieving product with ID: {ProductId}", id);
-            var products = await context.Products.ToListAsync();
-            var product = products.FirstOrDefault(p => p.Id == id);
+            var product = await context.Products.FindAsync(id);
             if(product is null) {
                 logger.LogInformation("Product fetch failed. Product with ID {ProductId} was not found", id);
                 return null;}
@@ -68,6 +90,11 @@ namespace app.Services
                 Stock = product.Stock
             };
             logger.LogInformation("Product fetched suucessfully with ID: {ProductID}", id);
+            cache.Set(cacheKey, result, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration=TimeSpan.FromMinutes(2)
+            });
             return result;
         }
         public async Task<ProductDto> CreateProductAsync(CreateProductDto dto)
@@ -84,6 +111,7 @@ namespace app.Services
             };
             await context.Products.AddAsync(product);
             await context.SaveChangesAsync();
+            RemoveProductCaches();
             logger.LogInformation("Product created suucessfully with ID: {ProductID}", product.Id);
             return new ProductDto()
             {
@@ -114,6 +142,7 @@ namespace app.Services
                 Price = existingProduct.Price,
                 Stock = existingProduct.Stock,
             };
+            RemoveProductCaches();
             logger.LogInformation("Product updated successefully. Product with ID {ProductId} was updated", id);
             return result;
         }
@@ -124,9 +153,20 @@ namespace app.Services
             if(product is null) {
                 logger.LogInformation("Product delete failed. Product with ID {ProductID} was not found", id);
                 return false;}
+            RemoveProductCaches();
             logger.LogInformation("Product delete successful. Product with ID {ProductID} was deleted", id);
             context.Products.Remove(product);
+            await context.SaveChangesAsync();
             return true;
+        }
+
+        private void RemoveProductCaches(int? productId = null)
+        {
+            if (productId.HasValue)
+            {
+                cache.Remove($"{ProductByIdCacheKeyPrefix}{productId.Value}");
+            }
+            logger.LogInformation($"product cache invalidated : {productId}");
         }
     }
 }
