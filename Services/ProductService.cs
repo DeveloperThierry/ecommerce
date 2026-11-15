@@ -13,21 +13,19 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace app.Services
 {
-    public class ProductService(AppDbContext context, ILogger<ProductService> logger, IDistributedCache cache):IProductService
+    public class ProductService(AppDbContext context, ILogger<ProductService> logger, IMemoryCache cache):IProductService
     {
         private const string ProductsCacheKey = "products:list";
         private const string ProductByIdCacheKeyPrefix = "products:id:";
         public async Task<(IEnumerable<ProductDto> Data, int TotalCount)> GetAllProductsAsync(ProductQueryParameters query)
         {
             var cacheKey = $"{ProductsCacheKey}:page={query.Page}:size={query.PageSize}:search={query.Search}:min={query.MinPrice}:max={query.MaxPrice}:sort={query.SortBy}:desc={query.Descending}";
-            var cachedData = await cache.GetStringAsync(cacheKey);
-            if(cachedData is not null)
+            if(cache.TryGetValue(cacheKey, out (IEnumerable<ProductDto> Data, int TotalCount) cachedResult))
             {
                 logger.LogInformation("Products list loaded from cache. key : {cacheKey}", cacheKey);
-                var cachedResult = JsonSerializer.Deserialize<ProductListResponse>(cachedData);
-                return (cachedResult!.Data, cachedResult!.TotalCount);
+                return cachedResult;
             }
-            logger.LogInformation("Products list not found in Redis cache. Loading from database Key :{cacheKey}. ", cacheKey);
+            logger.LogInformation("Products list not found in cache. Loading from database Key :{cacheKey}. ", cacheKey);
             var productsQuery = context.Products.AsQueryable();
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
@@ -65,11 +63,10 @@ namespace app.Services
                 .ToListAsync();
             logger.LogInformation("Retrieving products with pagination");
             var result = ((IEnumerable<ProductDto>)products, totalCount);
-            var response = new ProductListResponse { Data = products, TotalCount = totalCount };
-            var serialized = JsonSerializer.Serialize(response);
-            await cache.SetStringAsync(cacheKey, serialized, new DistributedCacheEntryOptions
+            cache.Set(cacheKey, result, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration=TimeSpan.FromMinutes(2)
             });
             logger.LogInformation("Products saved to Redis cache Key : {CachedKey} : ", cacheKey);
             return result;
@@ -78,12 +75,10 @@ namespace app.Services
         {
             // var cacheKey = $"product:{id}";
             var cacheKey = $"{ProductByIdCacheKeyPrefix}{id}";
-            
-            var cachedData = await cache.GetStringAsync(cacheKey);
-            if(cachedData is not null)
+            if(cache.TryGetValue(cacheKey, out ProductDto? cachedProduct))
             {
-                logger.LogInformation("Product with Id {ProductId} loaded from Redis cache", id);
-                return JsonSerializer.Deserialize<ProductDto>(cachedData);
+                logger.LogInformation("Product with Id {ProductId} loaded from cache", id);
+                return cachedProduct;
             }
             logger.LogInformation("Retrieving product with ID: {ProductId}", id);
             var product = await context.Products.FindAsync(id);
@@ -98,11 +93,11 @@ namespace app.Services
                 Price = product.Price,
                 Stock = product.Stock
             };
-            var serialized = JsonSerializer.Serialize(result);
             logger.LogInformation("Product fetched suucessfully with ID: {ProductID}", id);
-            await cache.SetStringAsync(cacheKey, serialized, new DistributedCacheEntryOptions
+            cache.Set(cacheKey, result, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration=TimeSpan.FromMinutes(2)
             });
             return result;
         }
@@ -120,8 +115,8 @@ namespace app.Services
             };
             await context.Products.AddAsync(product);
             await context.SaveChangesAsync();
-            await RemoveProductCachesAsync();
             logger.LogInformation("Product created suucessfully with ID: {ProductID}", product.Id);
+            RemoveProductCaches();
             return new ProductDto()
             {
                 Id = product.Id,
@@ -151,8 +146,8 @@ namespace app.Services
                 Price = existingProduct.Price,
                 Stock = existingProduct.Stock,
             };
-            await RemoveProductCachesAsync(id);
             logger.LogInformation("Product updated successefully. Product with ID {ProductId} was updated", id);
+            RemoveProductCaches(id);
             return result;
         }
 
@@ -162,23 +157,23 @@ namespace app.Services
             if(product is null) {
                 logger.LogInformation("Product delete failed. Product with ID {ProductID} was not found", id);
                 return false;}
+            logger.LogInformation("Product delete successful. Product with ID {ProductID} was deleted", id);
             context.Products.Remove(product);
             await context.SaveChangesAsync();
-            logger.LogInformation("Product delete successful. Product with ID {ProductID} was deleted", id);
-            await RemoveProductCachesAsync(id);
+            RemoveProductCaches(id);
             return true;
         }
 
-       private async Task RemoveProductCachesAsync(int? productId = null)
-        {
-            if (productId.HasValue)
-            {
-                await cache.RemoveAsync($"{ProductByIdCacheKeyPrefix}{productId.Value}");
-            }
+    //    private async Task RemoveProductCachesAsync(int? productId = null)
+    //     {
+    //         if (productId.HasValue)
+    //         {
+    //             await cache.RemoveAsync($"{ProductByIdCacheKeyPrefix}{productId.Value}");
+    //         }
 
-            // Clears the default page 1 list cache (adjust defaults if yours differ)
-            await cache.RemoveAsync($"{ProductsCacheKey}:page=1:size=10:search=:min=:max=:sort=:desc=False");
-        }
+    //         // Clears the default page 1 list cache (adjust defaults if yours differ)
+    //         await cache.RemoveAsync($"{ProductsCacheKey}:page=1:size=10:search=:min=:max=:sort=:desc=False");
+    //     }
         private void RemoveProductCaches(int? productId = null)
         {
             if (productId.HasValue)

@@ -24,12 +24,11 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddCors();
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-//    options.Configuration = "localhost:6379" 
-   options.Configuration = "localhost:6379";
-   options.InstanceName="EcommerceApi";
-});
+// builder.Services.AddStackExchangeRedisCache(options =>
+// {
+//    options.Configuration = "localhost:6379";
+//    options.InstanceName="EcommerceApi";
+// });
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
