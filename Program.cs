@@ -11,7 +11,6 @@ using Serilog;
 
 Log.Logger = new LoggerConfiguration().MinimumLevel.Information().WriteTo.Console().WriteTo.File(path:"Logs/log.txt", rollingInterval:RollingInterval.Day).CreateLogger();
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddMemoryCache();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Host.UseSerilog();
@@ -23,6 +22,13 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+//    options.Configuration = "localhost:6379" 
+   options.Configuration = "localhost:6379";
+   options.InstanceName="EcommerceApi";
+});
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

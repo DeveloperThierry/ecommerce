@@ -53,7 +53,7 @@ namespace app.Controllers
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] CreateProductDto dto)
         {
             if(dto is null) return BadRequest();         
-            var result = productService.UpdateProductAsync(id, dto);
+            var result = await productService.UpdateProductAsync(id, dto);
             if(result is null) return NotFound();
             return Ok(result);
         }
