@@ -484,3 +484,5 @@ $RECYCLE.BIN/
 #Hide appsettings development file
 appsettings.Development.json
 .env
+#hide redis dump files
+dump.rdb

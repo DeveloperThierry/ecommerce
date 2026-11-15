@@ -56,11 +56,11 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+// if (app.Environment.IsDevelopment())
+// {
     app.MapOpenApi();
     app.MapScalarApiReference();
-}
+// }
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
