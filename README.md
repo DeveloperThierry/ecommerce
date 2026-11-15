@@ -1,9 +1,8 @@
 # E-Commerce ASP.NET Core API
 
-[Build Status]
-[License]
-[.NET Version]
 
+![Screenshot](public/api.png)
+![Screenshot](public/cache.png)
 ![Screenshot](public/ecommerce.png)
 
 ## Short Description
@@ -61,3 +60,31 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 -----
 
 *Need help or have questions? Please open an issue in the repository.*
+
+
+
+## Testing
+
+### **Authentication Controller**
+
+*   **POST** `/api/auth/register`: Used to create a new user account.
+*   **POST** `/api/auth/login`: Used for user authentication to receive a *JWT* (JSON Web Token).
+
+### **Product Controller**
+
+*   **GET** `/api/products`: Retrieves all products, supporting pagination, filtering, and sorting.
+*   **GET** `/api/products/{id}`: Retrieves a single product by its unique identifier.
+*   **POST** `/api/products`: Creates a new product (restricted to admin role).
+*   **PUT** `/api/products/{id}`: Updates an existing product (restricted to admin role).
+*   **DELETE** `/api/products/{id}`: Removes a product from the system (restricted to admin role).
+
+### **Cart Controller**
+
+*   **GET** `/api/cart`: Retrieves the shopping cart for the authenticated user.
+*   **POST** `/api/cart`: Adds an item to the user's cart.
+*   **PUT** `/api/cart`: Updates the quantity of an item in the cart.
+*   **DELETE** `/api/cart/{productId}`: Removes an item from the cart.
+
+### **Order Controller**
+
+*   **POST** `/api/orders/checkout`: Processes the checkout for the items currently in the user's cart.
