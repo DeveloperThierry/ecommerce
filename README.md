@@ -88,3 +88,15 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 ### **Order Controller**
 
 *   **POST** `/api/orders/checkout`: Processes the checkout for the items currently in the user's cart.
+
+
+## Highlights
+
+*   **Engineered a scalable RESTful e-commerce backend** using **ASP.NET Core** and **Entity Framework Core**, integrating **PostgreSQL** for relational data and **Redis** for distributed caching to optimize API response times.
+*   **Architected secure authentication and authorization systems** utilizing **JSON Web Tokens (JWT)** and **Role-Based Access Control (RBAC)** to enforce granular user and administrative permissions.
+*   **Modernized deployment workflows** by implementing **containerized infrastructure** via **Docker**, facilitating consistent environments and streamlining the CI/CD pipeline on *Render*.
+*   **Optimized database performance** by configuring **Entity Framework Core** with precision-based **decimal mapping** and query-level filtering to reduce data payload sizes.
+*   **Standardized cross-layer communication** by implementing **Data Transfer Objects (DTOs)** and integrating **AutoMapper** to decouple internal domain models from API contracts.
+*   **Strengthened application robustness** by replacing basic data annotations with **FluentValidation**, enabling complex, maintainable business rule validation outside of the models.
+*   **Enhanced observability and debugging** by integrating **Serilog** for structured logging, capturing request-response lifecycles and critical system warnings to persistent storage.
+*   **Improved API performance** through **in-memory caching** and subsequent migration to **distributed Redis caching**, ensuring low-latency retrieval for frequent read operations.
