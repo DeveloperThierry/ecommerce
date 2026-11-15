@@ -163,24 +163,14 @@ namespace app.Services
             RemoveProductCaches(id);
             return true;
         }
-
-    //    private async Task RemoveProductCachesAsync(int? productId = null)
-    //     {
-    //         if (productId.HasValue)
-    //         {
-    //             await cache.RemoveAsync($"{ProductByIdCacheKeyPrefix}{productId.Value}");
-    //         }
-
-    //         // Clears the default page 1 list cache (adjust defaults if yours differ)
-    //         await cache.RemoveAsync($"{ProductsCacheKey}:page=1:size=10:search=:min=:max=:sort=:desc=False");
-    //     }
         private void RemoveProductCaches(int? productId = null)
         {
             if (productId.HasValue)
             {
                 cache.Remove($"{ProductByIdCacheKeyPrefix}{productId.Value}");
             }
-            logger.LogInformation($"product cache invalidated : {productId}");
+            (cache as MemoryCache)?.Clear();
+            logger.LogInformation("All product caches invalidated");
         }
     }
 }
